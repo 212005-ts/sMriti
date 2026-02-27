@@ -189,7 +189,7 @@ export default function GetStarted() {
                       name="medicine"
                       value={formData.medicine}
                       onChange={handleChange}
-                      placeholder="e.g., BP Medicine"
+                      placeholder="e.g., Metformin, Amlodipine, Thyroxine"
                       required
                       className="w-full px-5 py-3.5 rounded-xl border-2 border-slate-200 focus:border-custom-teal focus:outline-none transition-all text-slate-900 placeholder:text-slate-400"
                     />

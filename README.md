@@ -1,7 +1,7 @@
 # sMriti - Medicine Reminder System
 
 ## Overview
-sMriti is an automated medicine reminder system designed for elderly parents. It makes voice calls at scheduled times to remind them to take their medication, with SMS alerts sent to caregivers if doses are missed.
+sMriti is an automated medicine reminder system designed for elderly parents in India. It makes voice calls at scheduled times to remind them to take their medication, with SMS alerts sent to caregivers if doses are missed. Supports Hindi and English languages for India's diverse population.
 
 ## How It Works
 
@@ -196,14 +196,22 @@ npm run dev
 
 ## Use Case Example
 
-**Scenario**: 80-year-old parent needs to take blood pressure medicine daily at 9 AM
+**Scenario**: 75-year-old parent in Mumbai needs to take diabetes medicine (Metformin) daily at 8 AM
 
-1. Daughter schedules reminder via dashboard
-2. Every day at 9:00 AM, parent receives call
-3. Parent hears: "Namaste Papa. Kripya apni BP ki dawa lein. 1 dabaiye."
-4. Parent presses 1 → Daughter sees "TAKEN" status
-5. If parent doesn't respond → Call again at 9:01 AM
-6. Still no response → Daughter gets SMS alert
+1. Son schedules reminder via dashboard
+2. Every day at 8:00 AM, parent receives call
+3. Parent hears: "Namaste Papa. Kripya apni Metformin ki goli lein. 1 dabaiye."
+4. Parent presses 1 → Son sees "TAKEN" status
+5. If parent doesn't respond → Call again at 8:01 AM
+6. Still no response → Son gets SMS alert: "Alert: Papa missed Metformin medicine."
+
+**Common Indian Medications Supported:**
+- Blood Pressure: Amlodipine, Telmisartan, Atenolol
+- Diabetes: Metformin, Glimepiride, Insulin
+- Heart: Aspirin, Clopidogrel, Atorvastatin
+- Thyroid: Thyroxine, Eltroxin
+- Pain: Paracetamol, Diclofenac
+- Vitamins: Calcium, Vitamin D3, B12
 
 ## Future Enhancements
 

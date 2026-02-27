@@ -100,7 +100,7 @@ export default function Home() {
             <div className="space-y-4">
               <div className="flex justify-between items-center bg-white/60 backdrop-blur-sm p-5 rounded-2xl border-2 border-slate-200/50">
                 <div>
-                  <p className="font-bold text-slate-900 text-lg">BP Medicine</p>
+                  <p className="font-bold text-slate-900 text-lg">Metformin</p>
                   <p className="text-sm text-slate-500 mt-1">09:00 AM • Daily</p>
                 </div>
                 <div className="bg-custom-teal text-white px-4 py-2 rounded-xl font-bold text-sm">
@@ -110,7 +110,7 @@ export default function Home() {
 
               <div className="flex justify-between items-center bg-white/60 backdrop-blur-sm p-5 rounded-2xl border-2 border-slate-200/50">
                 <div>
-                  <p className="font-bold text-slate-900 text-lg">Vitamin D</p>
+                  <p className="font-bold text-slate-900 text-lg">Vitamin D3</p>
                   <p className="text-sm text-slate-500 mt-1">01:00 PM • Daily</p>
                 </div>
                 <div className="bg-slate-200 text-slate-700 px-4 py-2 rounded-xl font-bold text-sm">
@@ -120,7 +120,7 @@ export default function Home() {
 
               <div className="flex justify-between items-center bg-white/60 backdrop-blur-sm p-5 rounded-2xl border-2 border-slate-200/50">
                 <div>
-                  <p className="font-bold text-slate-900 text-lg">Insulin</p>
+                  <p className="font-bold text-slate-900 text-lg">Amlodipine</p>
                   <p className="text-sm text-slate-500 mt-1">08:00 PM • Daily</p>
                 </div>
                 <div className="bg-slate-100 text-slate-500 px-4 py-2 rounded-xl font-bold text-sm">
@@ -228,7 +228,7 @@ export default function Home() {
               <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
                 <div className="flex justify-between items-center">
                   <div>
-                    <p className="font-bold text-slate-900 text-lg">BP Medicine</p>
+                    <p className="font-bold text-slate-900 text-lg">Metformin</p>
                     <p className="text-sm text-slate-500 mt-1">09:00 AM</p>
                   </div>
                   <div className="bg-custom-teal text-white px-4 py-2 rounded-xl font-bold text-sm">
@@ -247,7 +247,7 @@ export default function Home() {
               <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
                 <div className="flex justify-between items-center">
                   <div>
-                    <p className="font-bold text-slate-900 text-lg">Vitamin D</p>
+                    <p className="font-bold text-slate-900 text-lg">Vitamin D3</p>
                     <p className="text-sm text-slate-500 mt-1">01:00 PM</p>
                   </div>
                   <div className="bg-slate-200 text-slate-700 px-4 py-2 rounded-xl font-bold text-sm">
@@ -266,7 +266,7 @@ export default function Home() {
               <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
                 <div className="flex justify-between items-center">
                   <div>
-                    <p className="font-bold text-slate-900 text-lg">Insulin</p>
+                    <p className="font-bold text-slate-900 text-lg">Amlodipine</p>
                     <p className="text-sm text-slate-500 mt-1">08:00 PM</p>
                   </div>
                   <div className="bg-slate-100 text-slate-500 px-4 py-2 rounded-xl font-bold text-sm">
@@ -295,21 +295,21 @@ export default function Home() {
 
           <div className="grid md:grid-cols-3 gap-8 mb-16">
             <div className="bg-white p-8 rounded-3xl border-2 border-slate-200 shadow-lg">
-              <div className="text-5xl font-black text-custom-teal mb-4">50%</div>
+              <div className="text-5xl font-black text-custom-teal mb-4">65%</div>
               <p className="text-lg text-slate-700 font-semibold mb-2">Non-Adherence Rate</p>
-              <p className="text-slate-600 font-subheading">Of elderly patients don't take medications as prescribed</p>
+              <p className="text-slate-600 font-subheading">Of elderly patients in India don't take medications as prescribed</p>
             </div>
             
             <div className="bg-white p-8 rounded-3xl border-2 border-slate-200 shadow-lg">
-              <div className="text-5xl font-black text-custom-teal mb-4">125K</div>
+              <div className="text-5xl font-black text-custom-teal mb-4">2.5L</div>
               <p className="text-lg text-slate-700 font-semibold mb-2">Annual Deaths</p>
-              <p className="text-slate-600 font-subheading">Due to medication non-compliance in the US alone</p>
+              <p className="text-slate-600 font-subheading">Due to medication non-compliance in India annually</p>
             </div>
             
             <div className="bg-white p-8 rounded-3xl border-2 border-slate-200 shadow-lg">
-              <div className="text-5xl font-black text-custom-teal mb-4">₹300B</div>
+              <div className="text-5xl font-black text-custom-teal mb-4">₹1.5L Cr</div>
               <p className="text-lg text-slate-700 font-semibold mb-2">Healthcare Cost</p>
-              <p className="text-slate-600 font-subheading">Wasted annually due to missed medications</p>
+              <p className="text-slate-600 font-subheading">Wasted annually in India due to missed medications</p>
             </div>
           </div>
 
