@@ -1,0 +1,15 @@
+{
+  "name": "smirti",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "cd frontend && npm install && npm run build"
+  },
+  "dependencies": {
+    "express": "^5.2.1",
+    "body-parser": "^2.2.2",
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "node-cron": "^4.2.1",
+    "twilio": "^5.12.2"
+  }
+}

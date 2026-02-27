@@ -47,7 +47,7 @@ function addMinutes(date, m) {
 }
 
 // ---------- CREATE REMINDER WITH REPEAT ----------
-app.post('/schedule', (req, res) => {
+app.post('/api/schedule', (req, res) => {
   const { parentName, parentPhone, medicine, time, caregiverPhone, language, repeatType, daysOfWeek, dayOfMonth } = req.body;
 
   if (!parentName || !parentPhone || !medicine || !time || !caregiverPhone) {
@@ -81,10 +81,10 @@ app.post('/schedule', (req, res) => {
   res.json({ success: true, reminder });
 });
 
-app.get('/reminders', (req, res) => res.json(reminders));
+app.get('/api/reminders', (req, res) => res.json(reminders));
 
 // Test endpoint
-app.get('/test', (req, res) => {
+app.get('/api/test', (req, res) => {
   console.log('[TEST] Endpoint hit');
   res.json({ status: 'ok', reminders: reminders.length });
 });
@@ -154,8 +154,8 @@ function makeCall(rem) {
     return;
   }
   
-  const callUrl = `${BASE_URL}/voice?id=${rem.id}`;
-  const statusUrl = `${BASE_URL}/status?id=${rem.id}`;
+  const callUrl = `${BASE_URL}/api/voice?id=${rem.id}`;
+  const statusUrl = `${BASE_URL}/api/status?id=${rem.id}`;
   console.log(`[CALL] Voice URL: ${callUrl}`);
   console.log(`[CALL] Status callback URL: ${statusUrl}`);
   
@@ -211,12 +211,12 @@ function finalizeMissed(rem) {
 }
 
 // ---------- STATUS ----------
-app.get('/status', (req, res) => {
+app.get('/api/status', (req, res) => {
   console.log('[STATUS] GET request received');
   res.send('OK');
 });
 
-app.post('/status', (req, res) => {
+app.post('/api/status', (req, res) => {
   console.log('[STATUS] POST callback received');
   console.log('[STATUS] Query params:', req.query);
   console.log('[STATUS] Body:', req.body);
@@ -274,7 +274,7 @@ const handleVoice = (req, res) => {
 
     const gather = twiml.gather({ 
       numDigits: 1, 
-      action: `${BASE_URL}/gather?id=${id}`, 
+      action: `${BASE_URL}/api/gather?id=${id}`, 
       method: 'POST',
       timeout: 10
     });
@@ -313,11 +313,11 @@ const handleVoice = (req, res) => {
   }
 };
 
-app.get('/voice', handleVoice);
-app.post('/voice', handleVoice);
+app.get('/api/voice', handleVoice);
+app.post('/api/voice', handleVoice);
 
 // ---------- GATHER ----------
-app.post('/gather', (req, res) => {
+app.post('/api/gather', (req, res) => {
   try {
     console.log('[GATHER] POST request received');
     console.log('[GATHER] Query params:', req.query);
@@ -368,5 +368,11 @@ app.post('/gather', (req, res) => {
   }
 });
 
-app.listen(PORT, '0.0.0.0', () => console.log(`Server running on ${PORT}`));
+// Export for Vercel
+module.exports = app;
+
+// Only listen if not in Vercel
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, '0.0.0.0', () => console.log(`Server running on ${PORT}`));
+}
 

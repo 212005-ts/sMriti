@@ -14,7 +14,7 @@ export default function Dashboard() {
 
   const fetchReminders = async () => {
     try {
-      const response = await axios.get('http://localhost:3001/reminders');
+      const response = await axios.get('/api/reminders');
       setReminders(response.data);
       setLoading(false);
     } catch (error) {

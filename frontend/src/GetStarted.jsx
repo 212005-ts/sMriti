@@ -28,7 +28,7 @@ export default function GetStarted() {
     setError('');
 
     try {
-      const response = await axios.post('http://localhost:3001/schedule', {
+      const response = await axios.post('/api/schedule', {
         parentName: formData.parentName,
         parentPhone: formData.parentPhone,
         medicine: formData.medicine,
