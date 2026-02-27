@@ -3,8 +3,8 @@ require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
-const cron = require('node-cron');
 const twilio = require('twilio');
+const { reminders, checkReminders, handleNoResponse } = require('./cronLogic');
 
 const app = express();
 
@@ -35,8 +35,8 @@ if (accountSid && accountSid.startsWith('AC') && authToken) {
 }
 
 
-// In-memory DB
-let reminders = [];
+// In-memory DB (shared with cronLogic)
+// let reminders = []; // Now imported from cronLogic
 
 // Helpers
 function nowHHMM() {
@@ -44,6 +44,20 @@ function nowHHMM() {
 }
 function addMinutes(date, m) {
   return new Date(date.getTime() + m*60000);
+}
+
+function handleNoResponse(rem) {
+  console.log(`[RETRY] Handling no response for ${rem.parentName}`);
+  
+  rem.inProgress = false;
+  if (rem.attempts < rem.maxAttempts) {
+    rem.nextAttemptAt = addMinutes(new Date(), 1);
+    console.log(`[RETRY] Will retry at: ${rem.nextAttemptAt}`);
+  } else {
+    console.log(`[RETRY] Max attempts reached - marking as MISSED`);
+    const { finalizeMissed } = require('./cronLogic');
+    finalizeMissed(rem);
+  }
 }
 
 // ---------- CREATE REMINDER WITH REPEAT ----------
@@ -89,126 +103,17 @@ app.get('/api/test', (req, res) => {
   res.json({ status: 'ok', reminders: reminders.length });
 });
 
-// ---------- SCHEDULER ----------
-cron.schedule('* * * * *', () => {
-  const now = new Date();
-  const currentTime = nowHHMM();
-  const day = now.getDay();
-  const date = now.getDate();
-
-  reminders.forEach(rem => {
-    if (rem.status === 'TAKEN' || rem.status === 'MISSED') {
-      // reset for next cycle
-      if (rem.repeatType !== 'once') {
-        rem.status = 'PENDING';
-        rem.attempts = 0;
-      }
-    }
-
-    if (rem.inProgress) return;
-
-    let shouldTrigger = false;
-
-    if (rem.repeatType === 'daily') {
-      shouldTrigger = (rem.time === currentTime);
-    }
-
-    if (rem.repeatType === 'weekly') {
-      shouldTrigger = (rem.daysOfWeek.includes(day) && rem.time === currentTime);
-    }
-
-    if (rem.repeatType === 'monthly') {
-      shouldTrigger = (rem.dayOfMonth === date && rem.time === currentTime);
-    }
-
-    if (shouldTrigger && rem.attempts === 0) {
-      triggerCall(rem);
-      return;
-    }
-
-    if (rem.nextAttemptAt && now >= new Date(rem.nextAttemptAt)) {
-      if (rem.attempts < rem.maxAttempts) triggerCall(rem);
-      else finalizeMissed(rem);
-    }
-  });
+// Manual trigger for testing
+app.post('/api/trigger-check', (req, res) => {
+  console.log('[MANUAL] Manual check triggered');
+  checkReminders();
+  res.json({ success: true, message: 'Check triggered' });
 });
 
-function triggerCall(rem) {
-  console.log(`[TRIGGER] Triggering call for ${rem.parentName}`);
-  console.log(`[TRIGGER] Attempt ${rem.attempts + 1}/${rem.maxAttempts}`);
-  
-  rem.attempts += 1;
-  rem.inProgress = true;
-  rem.status = 'CALLING';
-  rem.lastCalledAt = new Date();
+// ---------- SCHEDULER (Disabled on Vercel, use /api/cron instead) ----------
+// Vercel Cron will call /api/cron every minute
 
-  makeCall(rem);
-}
 
-function makeCall(rem) {
-  console.log(`[CALL] Initiating call for reminder ID: ${rem.id}`);
-  console.log(`[CALL] Parent: ${rem.parentName}, Phone: ${rem.parentPhone}, Medicine: ${rem.medicine}`);
-  
-  if (!client) {
-    console.log(`[DEMO] Would call ${rem.parentPhone} for ${rem.medicine}`);
-    return;
-  }
-  
-  const callUrl = `${BASE_URL}/api/voice?id=${rem.id}`;
-  const statusUrl = `${BASE_URL}/api/status?id=${rem.id}`;
-  console.log(`[CALL] Voice URL: ${callUrl}`);
-  console.log(`[CALL] Status callback URL: ${statusUrl}`);
-  
-  client.calls.create({
-    to: rem.parentPhone,
-    from: TWILIO_NUMBER,
-    url: callUrl,
-    statusCallback: statusUrl,
-    statusCallbackEvent: ['completed'],
-    statusCallbackMethod: 'POST'
-  })
-  .then(call => {
-    console.log(`[CALL] ✓ Call created successfully. SID: ${call.sid}`);
-  })
-  .catch(err => {
-    console.error(`[CALL] ✗ Error creating call:`, err.message);
-    rem.inProgress = false;
-  });
-}
-
-function handleNoResponse(rem) {
-  console.log(`[RETRY] Handling no response for ${rem.parentName}`);
-  console.log(`[RETRY] Attempts: ${rem.attempts}/${rem.maxAttempts}`);
-  
-  rem.inProgress = false;
-  if (rem.attempts < rem.maxAttempts) {
-    rem.nextAttemptAt = addMinutes(new Date(), 1);
-    console.log(`[RETRY] Will retry at: ${rem.nextAttemptAt}`);
-  } else {
-    console.log(`[RETRY] Max attempts reached - marking as MISSED`);
-    finalizeMissed(rem);
-  }
-}
-
-function finalizeMissed(rem) {
-  console.log(`[MISSED] Finalizing missed medicine for ${rem.parentName}`);
-  rem.status = 'MISSED';
-  rem.inProgress = false;
-  rem.nextAttemptAt = null;
-
-  if (client) {
-    console.log(`[SMS] Sending alert to caregiver: ${rem.caregiverPhone}`);
-    client.messages.create({
-      to: rem.caregiverPhone,
-      from: TWILIO_NUMBER,
-      body: `Alert: ${rem.parentName} missed medicine.`
-    })
-    .then(msg => console.log(`[SMS] ✓ Alert sent. SID: ${msg.sid}`))
-    .catch(err => console.error(`[SMS] ✗ Error sending SMS:`, err.message));
-  } else {
-    console.log(`[DEMO] Would SMS ${rem.caregiverPhone}: ${rem.parentName} missed medicine`);
-  }
-}
 
 // ---------- STATUS ----------
 app.get('/api/status', (req, res) => {
