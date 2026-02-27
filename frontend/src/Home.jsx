@@ -316,7 +316,7 @@ export default function Home() {
           <div className="bg-gradient-to-br from-custom-teal to-custom-teal-700 rounded-3xl p-12 text-white text-center shadow-2xl">
             <h3 className="text-3xl font-black mb-4 font-heading">Our Solution</h3>
             <p className="text-xl font-subheading leading-relaxed max-w-3xl mx-auto">
-              sMriti bridges the gap with automated voice reminders, instant confirmation tracking, and real-time caregiver alerts — ensuring your loved ones never miss a dose.
+              sMriti bridges the gap with automated voice reminders, instant confirmation tracking, and real-time caregiver alerts - ensuring your loved ones never miss a dose.
             </p>
           </div>
         </div>
@@ -340,7 +340,7 @@ export default function Home() {
       {/* Footer */}
       <footer id="contact" className="bg-slate-50 border-t border-slate-200">
         <div className="max-w-7xl mx-auto px-8 py-20">
-          <div className="grid md:grid-cols-4 gap-16">
+          <div className="grid md:grid-cols-3 gap-16">
             
             <div>
               <div className="flex items-center gap-3 mb-6">
@@ -352,22 +352,12 @@ export default function Home() {
             </div>
 
             <div>
-              <h4 className="text-slate-900 font-bold mb-6 text-lg font-heading">Product</h4>
+              <h4 className="text-slate-900 font-bold mb-6 text-lg font-heading">Quick Links</h4>
               <ul className="space-y-4 text-slate-600">
                 <li><a href="#how-it-works" className="hover:text-custom-teal cursor-pointer transition-colors">How It Works</a></li>
                 <li><a href="#features" className="hover:text-custom-teal cursor-pointer transition-colors">Features</a></li>
-                <li className="hover:text-custom-teal cursor-pointer transition-colors">Pricing</li>
-                <li className="hover:text-custom-teal cursor-pointer transition-colors">Demo</li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="text-slate-900 font-bold mb-6 text-lg font-heading">Company</h4>
-              <ul className="space-y-4 text-slate-600">
-                <li className="hover:text-custom-teal cursor-pointer transition-colors">About Us</li>
-                <li><a href="#contact" className="hover:text-custom-teal cursor-pointer transition-colors">Contact</a></li>
-                <li className="hover:text-custom-teal cursor-pointer transition-colors">Privacy Policy</li>
-                <li className="hover:text-custom-teal cursor-pointer transition-colors">Terms</li>
+                <li><Link to="/privacy" className="hover:text-custom-teal cursor-pointer transition-colors">Privacy Policy</Link></li>
+                <li><Link to="/terms" className="hover:text-custom-teal cursor-pointer transition-colors">Terms of Service</Link></li>
               </ul>
             </div>
 

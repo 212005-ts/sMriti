@@ -202,7 +202,10 @@ export default function GetStarted() {
                       value={formData.time}
                       onChange={handleChange}
                       required
-                      className="w-full px-5 py-3.5 rounded-xl border-2 border-slate-200 focus:border-custom-teal focus:outline-none transition-all text-slate-900"
+                      className="w-full px-5 py-3.5 rounded-xl border-2 border-slate-200 focus:border-custom-teal focus:outline-none transition-all text-slate-900 bg-white font-semibold text-lg"
+                      style={{
+                        colorScheme: 'light',
+                      }}
                     />
                   </div>
                 </div>
