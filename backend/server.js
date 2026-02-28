@@ -4,13 +4,13 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const twilio = require('twilio');
-const { reminders, checkReminders, handleNoResponse } = require('./cronLogic');
+const cronLogic = require('./cronLogic');
 
 const app = express();
 
-// Add logging middleware FIRST
 app.use((req, res, next) => {
   console.log(`[REQUEST] ${req.method} ${req.path}`);
+  console.log(`[REQUEST] Body:`, req.body);
   next();
 });
 
@@ -20,7 +20,6 @@ app.use(bodyParser.urlencoded({ extended: false }));
 
 const PORT = process.env.PORT||3000;
 
-// Twilio Config
 const accountSid = process.env.ACCOUNT_SID;
 const authToken = process.env.AUTH_TOKEN;
 const TWILIO_NUMBER = process.env.TWILIO_NUMBER;
@@ -34,35 +33,36 @@ if (accountSid && accountSid.startsWith('AC') && authToken) {
   console.log('⚠️  Twilio not configured - calls/SMS disabled');
 }
 
-
-// In-memory DB (shared with cronLogic)
-// let reminders = []; // Now imported from cronLogic
-
-// Helpers
-function nowHHMM() {
-  return new Date().toTimeString().slice(0,5);
-}
 function addMinutes(date, m) {
   return new Date(date.getTime() + m*60000);
 }
 
 function handleNoResponse(rem) {
-  console.log(`[RETRY] Handling no response for ${rem.parentName}`);
+  console.log(`[RETRY] ========== HANDLING NO RESPONSE ==========`);
+  console.log(`[RETRY] Patient: ${rem.parentName}`);
+  console.log(`[RETRY] Current attempts: ${rem.attempts}`);
+  console.log(`[RETRY] Max attempts: ${rem.maxAttempts}`);
   
   rem.inProgress = false;
+  
   if (rem.attempts < rem.maxAttempts) {
     rem.nextAttemptAt = addMinutes(new Date(), 1);
-    console.log(`[RETRY] Will retry at: ${rem.nextAttemptAt}`);
+    console.log(`[RETRY] ✓ Will retry at: ${rem.nextAttemptAt}`);
+    console.log(`[RETRY] Status remains: ${rem.status}`);
   } else {
-    console.log(`[RETRY] Max attempts reached - marking as MISSED`);
-    const { finalizeMissed } = require('./cronLogic');
-    finalizeMissed(rem);
+    console.log(`[RETRY] ✗ Max attempts (${rem.maxAttempts}) reached`);
+    console.log(`[RETRY] Calling finalizeMissed...`);
+    cronLogic.finalizeMissed(rem);
   }
 }
 
-// ---------- CREATE REMINDER WITH REPEAT ----------
 app.post('/api/schedule', (req, res) => {
   const { parentName, parentPhone, medicine, time, caregiverPhone, language, repeatType, daysOfWeek, dayOfMonth } = req.body;
+
+  console.log('[SCHEDULE] ========== NEW REMINDER ==========');
+  console.log('[SCHEDULE] Parent:', parentName, parentPhone);
+  console.log('[SCHEDULE] Caregiver:', caregiverPhone);
+  console.log('[SCHEDULE] Medicine:', medicine, 'at', time);
 
   if (!parentName || !parentPhone || !medicine || !time || !caregiverPhone) {
     return res.status(400).json({ error: 'Missing fields' });
@@ -75,14 +75,10 @@ app.post('/api/schedule', (req, res) => {
     medicine,
     time,
     caregiverPhone,
-
     language: language || 'hi',
-
-    // NEW: repeat config
-    repeatType: repeatType || 'daily', // daily | weekly | monthly
-    daysOfWeek: daysOfWeek || [], // [0-6]
+    repeatType: repeatType || 'daily',
+    daysOfWeek: daysOfWeek || [],
     dayOfMonth: dayOfMonth || null,
-
     status: 'PENDING',
     attempts: 0,
     maxAttempts: 2,
@@ -91,85 +87,100 @@ app.post('/api/schedule', (req, res) => {
     inProgress: false
   };
 
-  reminders.push(reminder);
+  cronLogic.reminders.push(reminder);
+  console.log('[SCHEDULE] ✓ Reminder created with ID:', reminder.id);
   res.json({ success: true, reminder });
 });
 
-app.get('/api/reminders', (req, res) => res.json(reminders));
+app.get('/api/reminders', (req, res) => res.json(cronLogic.reminders));
 
-// Test endpoint
 app.get('/api/test', (req, res) => {
   console.log('[TEST] Endpoint hit');
-  res.json({ status: 'ok', reminders: reminders.length });
+  res.json({ status: 'ok', reminders: cronLogic.reminders.length });
 });
 
-// Manual trigger for testing
 app.post('/api/trigger-check', (req, res) => {
   console.log('[MANUAL] Manual check triggered');
-  checkReminders();
+  cronLogic.checkReminders();
   res.json({ success: true, message: 'Check triggered' });
 });
 
-// ---------- SCHEDULER (Disabled on Vercel, use /api/cron instead) ----------
-// Vercel Cron will call /api/cron every minute
+app.post('/api/test-call', (req, res) => {
+  const { reminderId } = req.body;
+  
+  console.log('[TEST-CALL] Request body:', req.body);
+  console.log('[TEST-CALL] Looking for reminder ID:', reminderId);
+  console.log('[TEST-CALL] Total reminders:', cronLogic.reminders.length);
+  console.log('[TEST-CALL] All reminder IDs:', cronLogic.reminders.map(r => ({ id: r.id, name: r.parentName })));
+  
+  const rem = cronLogic.reminders.find(r => r.id == reminderId);
+  
+  if (!rem) {
+    console.log('[TEST-CALL] ✗ Reminder not found');
+    return res.status(404).json({ 
+      error: 'Reminder not found',
+      requestedId: reminderId,
+      availableIds: cronLogic.reminders.map(r => r.id)
+    });
+  }
+  
+  console.log('[TEST-CALL] ✓ Found reminder:', rem.parentName);
+  cronLogic.triggerCall(rem);
+  res.json({ success: true, message: 'Call triggered' });
+});
 
-
-
-// ---------- STATUS ----------
 app.get('/api/status', (req, res) => {
   console.log('[STATUS] GET request received');
   res.send('OK');
 });
 
 app.post('/api/status', (req, res) => {
-  console.log('[STATUS] POST callback received');
-  console.log('[STATUS] Query params:', req.query);
+  console.log('[STATUS] ========== CALL STATUS CALLBACK ==========');
+  console.log('[STATUS] Query:', req.query);
   console.log('[STATUS] Body:', req.body);
-  console.log('[STATUS] Call Status:', req.body.CallStatus);
+  console.log('[STATUS] CallStatus:', req.body.CallStatus);
+  console.log('[STATUS] CallDuration:', req.body.CallDuration);
   
-  const rem = reminders.find(r => r.id == req.query.id);
+  const rem = cronLogic.reminders.find(r => r.id == req.query.id);
   if (!rem) {
     console.error(`[STATUS] ✗ Reminder not found for ID: ${req.query.id}`);
     return res.sendStatus(200);
   }
-  
-  console.log(`[STATUS] Reminder: ${rem.parentName}, Current status: ${rem.status}`);
 
+  console.log(`[STATUS] Current reminder status: ${rem.status}`);
+
+  // If already TAKEN (user pressed 1), don't change it
   if (rem.status === 'TAKEN') {
-    console.log('[STATUS] Medicine already marked as TAKEN');
+    console.log('[STATUS] ✓ Medicine already confirmed as TAKEN');
+    rem.inProgress = false;
     return res.sendStatus(200);
   }
 
-  console.log('[STATUS] No response - handling retry logic');
-  handleNoResponse(rem);
+  // Call completed but no digit pressed - handle retry
+  if (req.body.CallStatus === 'completed') {
+    console.log('[STATUS] Call completed without confirmation');
+    handleNoResponse(rem);
+  }
+
   res.sendStatus(200);
 });
 
-// ---------- VOICE ----------
 const handleVoice = (req, res) => {
   try {
-    console.log(`[VOICE] ${req.method} request received`);
-    console.log('[VOICE] Headers:', req.headers);
-    console.log('[VOICE] Query params:', req.query);
-    console.log('[VOICE] Body:', req.body);
-    
     const VoiceResponse = twilio.twiml.VoiceResponse;
     const twiml = new VoiceResponse();
-
     const id = req.query.id;
     
     if (!id) {
-      console.error('[VOICE] ✗ No ID provided');
       twiml.say('Error: No reminder ID');
       res.type('text/xml');
       return res.send(twiml.toString());
     }
     
-    const rem = reminders.find(r => r.id == id);
+    const rem = cronLogic.reminders.find(r => r.id == id);
     
     if (!rem) {
       console.error(`[VOICE] ✗ Reminder not found for ID: ${id}`);
-      console.error(`[VOICE] Available IDs: ${reminders.map(r => r.id).join(', ')}`);
       twiml.say('Error: Reminder not found');
       res.type('text/xml');
       return res.send(twiml.toString());
@@ -187,27 +198,20 @@ const handleVoice = (req, res) => {
     const name = rem.parentName || 'aap';
     const med = rem.medicine || 'dawa';
     const lang = rem.language || 'hi';
-    
-    console.log(`[VOICE] Language: ${lang}, Name: ${name}, Medicine: ${med}`);
 
     const hi = `Namaste ${name}. Kripya apni ${med} lein. 1 dabaiye.`;
     const en = `Hello ${name}. Please take your ${med}. Press 1.`;
 
     if (lang === 'en') {
-      console.log('[VOICE] Using English voice');
       gather.say({ voice: 'alice', language: 'en-US' }, en);
     } else {
-      console.log('[VOICE] Using Hindi voice');
       gather.say({ voice: 'Polly.Aditi', language: 'hi-IN' }, hi);
     }
 
     twiml.hangup();
-    
-    const twimlString = twiml.toString();
-    console.log('[VOICE] TwiML response:', twimlString);
 
     res.type('text/xml');
-    res.send(twimlString);
+    res.send(twiml.toString());
   } catch (error) {
     console.error('[VOICE] ✗ Error:', error);
     const VoiceResponse = twilio.twiml.VoiceResponse;
@@ -221,48 +225,85 @@ const handleVoice = (req, res) => {
 app.get('/api/voice', handleVoice);
 app.post('/api/voice', handleVoice);
 
-// ---------- GATHER ----------
+// Caregiver alert voice call
+app.post('/api/caregiver-voice', (req, res) => {
+  try {
+    console.log('[CAREGIVER-VOICE] Generating alert message');
+    
+    const VoiceResponse = twilio.twiml.VoiceResponse;
+    const twiml = new VoiceResponse();
+    const id = req.query.id;
+    
+    const rem = cronLogic.reminders.find(r => r.id == id);
+    
+    if (!rem) {
+      twiml.say('Alert: Medicine reminder missed.');
+      res.type('text/xml');
+      return res.send(twiml.toString());
+    }
+    
+    const lang = rem.language || 'hi';
+    
+    if (lang === 'en') {
+      twiml.say({ voice: 'alice', language: 'en-US' }, 
+        `Alert. ${rem.parentName} has missed their ${rem.medicine} medicine after 2 call attempts. Please check on them immediately.`);
+    } else {
+      twiml.say({ voice: 'Polly.Aditi', language: 'hi-IN' }, 
+        `Alert. ${rem.parentName} ne apni ${rem.medicine} ki dawa 2 baar call karne ke baad bhi nahi li hai. Kripya turant unse sampark karein.`);
+    }
+    
+    console.log('[CAREGIVER-VOICE] ✓ Alert message sent');
+    res.type('text/xml');
+    res.send(twiml.toString());
+  } catch (error) {
+    console.error('[CAREGIVER-VOICE] ✗ Error:', error);
+    const VoiceResponse = twilio.twiml.VoiceResponse;
+    const twiml = new VoiceResponse();
+    twiml.say('Alert: Medicine reminder missed.');
+    res.type('text/xml');
+    res.send(twiml.toString());
+  }
+});
+
 app.post('/api/gather', (req, res) => {
   try {
-    console.log('[GATHER] POST request received');
-    console.log('[GATHER] Query params:', req.query);
+    console.log('[GATHER] ========== USER INPUT RECEIVED ==========');
+    console.log('[GATHER] Query:', req.query);
     console.log('[GATHER] Body:', req.body);
     console.log('[GATHER] Digits pressed:', req.body.Digits);
     
     const VoiceResponse = twilio.twiml.VoiceResponse;
     const twiml = new VoiceResponse();
-
     const id = req.query.id;
-    const rem = reminders.find(r => r.id == id);
+    const rem = cronLogic.reminders.find(r => r.id == id);
     
     if (!rem) {
-      console.error(`[GATHER] ✗ Reminder not found for ID: ${id}`);
+      console.error('[GATHER] ✗ Reminder not found');
       twiml.say('Error');
       res.type('text/xml');
       return res.send(twiml.toString());
     }
 
     if (req.body.Digits === '1') {
-      console.log(`[GATHER] ✓ User pressed 1 - Medicine TAKEN`);
+      console.log(`[GATHER] ✓ SUCCESS! ${rem.parentName} pressed 1`);
+      console.log(`[GATHER] Marking ${rem.medicine} as TAKEN`);
+      
       rem.status = 'TAKEN';
       rem.inProgress = false;
       rem.nextAttemptAt = null;
 
-      const name = rem.parentName;
-      const med = rem.medicine;
-
-      if (rem.language === 'en') twiml.say(`Thank you ${name}. You have taken your ${med}.`);
-      else twiml.say({ voice: 'Polly.Aditi', language: 'hi-IN' }, `Dhanyavaad ${name}. Aapne ${med} le li hai.`);
+      if (rem.language === 'en') {
+        twiml.say({ voice: 'alice', language: 'en-US' }, `Thank you ${rem.parentName}. You have taken your ${rem.medicine}.`);
+      } else {
+        twiml.say({ voice: 'Polly.Aditi', language: 'hi-IN' }, `Dhanyavaad ${rem.parentName}. Aapne ${rem.medicine} le li hai.`);
+      }
     } else {
-      console.log(`[GATHER] ✗ Invalid input: ${req.body.Digits}`);
+      console.log(`[GATHER] ✗ Invalid digit: ${req.body.Digits}`);
       twiml.say('Invalid input');
     }
-    
-    const twimlString = twiml.toString();
-    console.log('[GATHER] TwiML response:', twimlString);
 
     res.type('text/xml');
-    res.send(twimlString);
+    res.send(twiml.toString());
   } catch (error) {
     console.error('[GATHER] ✗ Error:', error);
     const VoiceResponse = twilio.twiml.VoiceResponse;
@@ -273,11 +314,18 @@ app.post('/api/gather', (req, res) => {
   }
 });
 
-// Export for Vercel
 module.exports = app;
 
-// Only listen if not in Vercel
+const cron = require('node-cron');
+
 if (process.env.NODE_ENV !== 'production') {
+  cron.schedule('* * * * *', () => {
+    cronLogic.checkReminders();
+  });
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server running on ${PORT}`);
+    console.log('Cron scheduler active');
+  });
+} else {
   app.listen(PORT, '0.0.0.0', () => console.log(`Server running on ${PORT}`));
 }
-

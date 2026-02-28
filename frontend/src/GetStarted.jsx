@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import axios from 'axios';
+import API_BASE_URL from './config';
 
 export default function GetStarted() {
   const navigate = useNavigate();
@@ -28,7 +29,7 @@ export default function GetStarted() {
     setError('');
 
     try {
-      const response = await axios.post('/api/schedule', {
+      const response = await axios.post(`${API_BASE_URL}/api/schedule`, {
         parentName: formData.parentName,
         parentPhone: formData.parentPhone,
         medicine: formData.medicine,
@@ -94,36 +95,36 @@ export default function GetStarted() {
             <div>
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 bg-custom-teal rounded-full flex items-center justify-center text-white font-black">1</div>
-                <h3 className="text-2xl font-black text-slate-900 font-heading">Your Details</h3>
+                <h3 className="text-2xl font-black text-slate-900 font-heading">Guardian/Caregiver Details</h3>
               </div>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">Full Name</label>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Guardian's Full Name</label>
                   <input 
                     type="text" 
                     name="fullName"
                     value={formData.fullName}
                     onChange={handleChange}
-                    placeholder="Enter your name"
+                    placeholder="Enter guardian's name"
                     required
                     className="w-full px-5 py-3.5 rounded-xl border-2 border-slate-200 focus:border-custom-teal focus:outline-none transition-all text-slate-900 placeholder:text-slate-400"
                   />
                 </div>
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">Email</label>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">Guardian's Email</label>
                     <input 
                       type="email" 
                       name="email"
                       value={formData.email}
                       onChange={handleChange}
-                      placeholder="you@example.com"
+                      placeholder="guardian@example.com"
                       required
                       className="w-full px-5 py-3.5 rounded-xl border-2 border-slate-200 focus:border-custom-teal focus:outline-none transition-all text-slate-900 placeholder:text-slate-400"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">Phone Number</label>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">Guardian's Phone Number</label>
                     <input 
                       type="tel" 
                       name="phone"
@@ -135,6 +136,11 @@ export default function GetStarted() {
                     />
                   </div>
                 </div>
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                  <p className="text-sm text-blue-800">
+                    <strong>Note:</strong> This number will receive alert calls if the patient misses their medicine after 2 attempts.
+                  </p>
+                </div>
               </div>
             </div>
 
@@ -142,24 +148,24 @@ export default function GetStarted() {
             <div className="pt-8 border-t border-slate-200">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 bg-custom-teal rounded-full flex items-center justify-center text-white font-black">2</div>
-                <h3 className="text-2xl font-black text-slate-900 font-heading">Parent's Details</h3>
+                <h3 className="text-2xl font-black text-slate-900 font-heading">Patient/Parent Details</h3>
               </div>
               <div className="space-y-4">
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">Parent's Name</label>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">Patient's Name</label>
                     <input 
                       type="text" 
                       name="parentName"
                       value={formData.parentName}
                       onChange={handleChange}
-                      placeholder="Enter parent's name"
+                      placeholder="Enter patient's name"
                       required
                       className="w-full px-5 py-3.5 rounded-xl border-2 border-slate-200 focus:border-custom-teal focus:outline-none transition-all text-slate-900 placeholder:text-slate-400"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">Parent's Phone</label>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">Patient's Phone Number</label>
                     <input 
                       type="tel" 
                       name="parentPhone"
@@ -170,6 +176,11 @@ export default function GetStarted() {
                       className="w-full px-5 py-3.5 rounded-xl border-2 border-slate-200 focus:border-custom-teal focus:outline-none transition-all text-slate-900 placeholder:text-slate-400"
                     />
                   </div>
+                </div>
+                <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+                  <p className="text-sm text-green-800">
+                    <strong>Note:</strong> This number will receive automated voice calls for medicine reminders.
+                  </p>
                 </div>
               </div>
             </div>

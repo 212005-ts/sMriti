@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import API_BASE_URL from './config';
 
 export default function Dashboard() {
   const [reminders, setReminders] = useState([]);
@@ -14,12 +15,26 @@ export default function Dashboard() {
 
   const fetchReminders = async () => {
     try {
-      const response = await axios.get('/api/reminders');
+      const response = await axios.get(`${API_BASE_URL}/api/reminders`);
       setReminders(response.data);
       setLoading(false);
     } catch (error) {
       console.error('Error fetching reminders:', error);
       setLoading(false);
+    }
+  };
+
+  const testCall = async (reminderId) => {
+    console.log('[FRONTEND] Test call clicked for reminder ID:', reminderId);
+    console.log('[FRONTEND] API URL:', `${API_BASE_URL}/api/test-call`);
+    try {
+      const response = await axios.post(`${API_BASE_URL}/api/test-call`, { reminderId });
+      console.log('[FRONTEND] Response:', response.data);
+      alert('Test call initiated! Check your phone.');
+    } catch (error) {
+      console.error('[FRONTEND] Error:', error);
+      console.error('[FRONTEND] Error response:', error.response?.data);
+      alert('Failed to initiate call: ' + (error.response?.data?.error || error.message));
     }
   };
 
@@ -157,6 +172,15 @@ export default function Dashboard() {
                         <p className="text-xs text-slate-500 font-semibold mb-1">ATTEMPTS</p>
                         <p className="text-base font-bold text-slate-900">{reminder.attempts} / {reminder.maxAttempts}</p>
                       </div>
+                    </div>
+
+                    <div className="mt-4">
+                      <button
+                        onClick={() => testCall(reminder.id)}
+                        className="bg-custom-teal text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-custom-teal-600 transition-all"
+                      >
+                        📞 Test Call Now
+                      </button>
                     </div>
 
                     {reminder.lastCalledAt && (
