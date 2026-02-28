@@ -15,11 +15,14 @@ export default function Dashboard() {
 
   const fetchReminders = async () => {
     try {
+      console.log('[DASHBOARD] Fetching from:', `${API_BASE_URL}/api/reminders`);
       const response = await axios.get(`${API_BASE_URL}/api/reminders`);
+      console.log('[DASHBOARD] Response:', response.data);
       setReminders(response.data);
       setLoading(false);
     } catch (error) {
-      console.error('Error fetching reminders:', error);
+      console.error('[DASHBOARD] Error fetching reminders:', error);
+      console.error('[DASHBOARD] Error details:', error.response?.data || error.message);
       setLoading(false);
     }
   };
@@ -77,9 +80,24 @@ export default function Dashboard() {
             <p className="text-lg text-slate-600 font-subheading">Track your medication schedule in real-time</p>
           </div>
           <Link to="/get-started">
-            <button className="bg-slate-900 text-white px-6 py-3 rounded-xl font-bold hover:bg-slate-800 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 active:translate-y-0">
-              + Add Reminder
-            </button>
+            <div className="flex gap-3">
+              <button 
+                onClick={async () => {
+                  try {
+                    await axios.post(`${API_BASE_URL}/api/trigger-check`);
+                    alert('Manual check triggered! Wait 5 seconds for refresh.');
+                  } catch (e) {
+                    alert('Error: ' + e.message);
+                  }
+                }}
+                className="bg-custom-teal text-white px-6 py-3 rounded-xl font-bold hover:bg-teal-600 transition-all shadow-lg"
+              >
+                🔄 Check Now
+              </button>
+              <button className="bg-slate-900 text-white px-6 py-3 rounded-xl font-bold hover:bg-slate-800 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 active:translate-y-0">
+                + Add Reminder
+              </button>
+            </div>
           </Link>
         </div>
 

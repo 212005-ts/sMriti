@@ -29,6 +29,9 @@ export default function GetStarted() {
     setError('');
 
     try {
+      console.log('[FORM] Submitting to:', `${API_BASE_URL}/api/schedule`);
+      console.log('[FORM] Data:', formData);
+      
       const response = await axios.post(`${API_BASE_URL}/api/schedule`, {
         parentName: formData.parentName,
         parentPhone: formData.parentPhone,
@@ -39,11 +42,15 @@ export default function GetStarted() {
         repeatType: formData.repeatType
       });
 
+      console.log('[FORM] Response:', response.data);
+      
       if (response.data.success) {
         alert('Reminder scheduled successfully!');
         navigate('/dashboard');
       }
     } catch (err) {
+      console.error('[FORM] Error:', err);
+      console.error('[FORM] Error response:', err.response?.data);
       setError(err.response?.data?.error || 'Failed to schedule reminder. Please try again.');
     } finally {
       setLoading(false);
